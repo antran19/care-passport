@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTideCloak } from "@/lib/mock";
+import { abs } from "@/lib/care/client";
+
 import { CareShell, card, btn, mono } from "@/components/CareShell";
 
 import { isRefusal, describeRefusal } from "@/lib/tide/relationship";
@@ -26,11 +28,11 @@ export default function AdminAttackPage() {
     setBusy(true);
     const out: Attempt[] = [];
     try {
-      const raw = await secureFetch("/api/admin/raw");
+      const raw = await secureFetch(abs("/api/admin/raw"));
       const server: { id: string; ciphertext: string | null }[] = raw.ok ? (await raw.json()).records : [];
       for (const r of RECORDS) {
         const ct = server.find((s) => s.id === r.id)?.ciphertext ?? null;
-        const pol = await secureFetch(`/api/policies?record=${r.id}&op=read`);
+        const pol = await secureFetch(abs(`/api/policies?record=${r.id}&op=read`));
         let net = "skipped (nothing to decrypt)";
         let blocked = true;
         if (ct) {
