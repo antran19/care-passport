@@ -1,0 +1,57 @@
+name: Care Passport CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Typecheck, Security Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare TideCloak schema stub
+        run: |
+          mkdir -p data
+          if [ ! -f data/tidecloak.json ]; then
+            cat << 'EOF' > data/tidecloak.json
+          {
+            "realm": "care-passport",
+            "auth-server-url": "http://localhost:8080",
+            "ssl-required": "external",
+            "resource": "care-passport-client",
+            "public-client": true,
+            "confidential-port": 0,
+            "jwk": {
+              "keys": []
+            }
+          }
+          EOF
+          fi
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run Backend & Security Test Suite
+        run: npm test
+
+      - name: Next.js Production Build (Mock Mode)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_MOCK: "1"

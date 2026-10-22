@@ -44,6 +44,35 @@ export interface ShareRequest {
   resolvedBy?: string;
 }
 
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action:
+    | "POLICY_ADDED"
+    | "POLICY_REMOVED"
+    | "SHARE_REQUEST_CREATED"
+    | "SHARE_REQUEST_APPROVED"
+    | "SHARE_REQUEST_REJECTED"
+    | "SHARE_REQUEST_REVOKED"
+    | "ADMIN_RAW_READ";
+  recordId: string;
+  details: string;
+}
+
+export const audit = {
+  all: () => load<AuditEntry[]>("audit", []),
+  log(entry: Omit<AuditEntry, "id" | "timestamp">): AuditEntry {
+    const item: AuditEntry = {
+      ...entry,
+      id: randomUUID(),
+      timestamp: new Date().toISOString(),
+    };
+    save("audit", [item, ...audit.all()]);
+    return item;
+  },
+};
+
 export const records = {
   all: () => load<StoredRecord[]>("records", []),
   get: (id: string) => records.all().find((r) => r.id === id),
@@ -63,12 +92,27 @@ export const policies = {
     const entry = { ...p, id: randomUUID(), createdAt: new Date().toISOString() };
     list.push(entry);
     save("policies", list);
+    audit.log({
+      actor: p.grantedBy,
+      action: "POLICY_ADDED",
+      recordId: p.recordId,
+      details: `Granted ${p.access} to ${p.subjectType} ${p.subjectId}`,
+    });
     return entry;
   },
-  remove(id: string): boolean {
+  remove(id: string, actor: string = "system"): boolean {
     const list = policies.all();
+    const target = list.find((x) => x.id === id);
     const next = list.filter((x) => x.id !== id);
     save("policies", next);
+    if (target) {
+      audit.log({
+        actor,
+        action: "POLICY_REMOVED",
+        recordId: target.recordId,
+        details: `Revoked policy for ${target.subjectType} ${target.subjectId}`,
+      });
+    }
     return next.length !== list.length;
   },
 };
@@ -78,17 +122,40 @@ export const shares = {
   add(s: Omit<ShareRequest, "id" | "createdAt" | "status">): ShareRequest {
     const entry: ShareRequest = { ...s, id: randomUUID(), status: "pending", createdAt: new Date().toISOString() };
     save("shares", [...shares.all(), entry]);
+    audit.log({
+      actor: s.requestedBy,
+      action: "SHARE_REQUEST_CREATED",
+      recordId: s.recordId,
+      details: `Created share request to ${s.to}`,
+    });
     return entry;
   },
-  update(id: string, patch: Partial<ShareRequest>): ShareRequest | undefined {
+  update(id: string, patch: Partial<ShareRequest>, actor: string = "system"): ShareRequest | undefined {
     const list = shares.all();
     const i = list.findIndex((s) => s.id === id);
     if (i < 0) return undefined;
     list[i] = { ...list[i], ...patch };
     save("shares", list);
+    if (patch.status) {
+      const actionMap: Record<string, AuditEntry["action"]> = {
+        approved: "SHARE_REQUEST_APPROVED",
+        rejected: "SHARE_REQUEST_REJECTED",
+        revoked: "SHARE_REQUEST_REVOKED",
+      };
+      const action = actionMap[patch.status];
+      if (action) {
+        audit.log({
+          actor,
+          action,
+          recordId: list[i].recordId,
+          details: `Share request status updated to ${patch.status} (recipient: ${list[i].to})`,
+        });
+      }
+    }
     return list[i];
   },
 };
+
 
 /** Which stored policies apply to the caller, judged only from the VERIFIED token. */
 export function policiesFor(jwt: JWTPayload, recordId: string, needs: "read" | "write"): StoredPolicy[] {

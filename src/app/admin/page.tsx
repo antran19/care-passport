@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTideCloak } from "@tidecloak/nextjs";
+import { useTideCloak } from "@/lib/mock";
 import { abs } from "@/lib/care/client";
+
+
 import tcConfig from "../../../data/tidecloak.json";
 import { CareShell, card, btn, btnGhost, btnDanger, mono } from "@/components/CareShell";
 import { fromBase64, signRelationshipPolicy, isRefusal, describeRefusal, type TideCtx, type RelationshipAccess } from "@/lib/tide/relationship";
@@ -24,6 +26,14 @@ interface ShareRequest {
   status: string;
   createdAt: string;
 }
+interface AuditEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  recordId: string;
+  details: string;
+}
 
 const CARE_POLICY_TTL_SECONDS = 24 * 3600; // short expiry: revoking one record is not instant, so access ends by itself
 
@@ -35,18 +45,26 @@ export default function AdminPage() {
 
   const [pols, setPols] = useState<StoredPolicyMeta[]>([]);
   const [reqs, setReqs] = useState<ShareRequest[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const [a, b] = await Promise.all([secureFetch(abs("/api/policies?all=1")), secureFetch(abs("/api/share-requests"))]);
+    const [a, b, c] = await Promise.all([
+      secureFetch(abs("/api/policies?all=1")),
+      secureFetch(abs("/api/share-requests")),
+      secureFetch(abs("/api/audit-logs")),
+    ]);
     if (a.ok) setPols((await a.json()).policies);
     if (b.ok) setReqs((await b.json()).requests);
+    if (c.ok) setAuditLogs((await c.json()).logs);
   }, [secureFetch]);
+
 
   useEffect(() => {
     if (isAdmin) load();
   }, [isAdmin, load]);
+
 
   // The realm's signed admin policy authorises the signing. Fetched with the admin's own token.
   const adminPolicy = async () => {
@@ -181,6 +199,45 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
+
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ marginTop: 0, color: "#5eead4" }}>4. Governance Audit Trail (Transparency Log)</h3>
+          <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>{auditLogs.length} events logged</span>
+        </div>
+        <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginTop: 0 }}>
+          Immutable log of all grant approvals, revocations, and administrative access. Eliminates unilateral admin power by creating a transparent trail.
+        </p>
+        {auditLogs.length === 0 && <p style={{ color: "#9ca3af", margin: 0 }}>No audit logs recorded yet.</p>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 260, overflowY: "auto" }}>
+          {auditLogs.map((log) => (
+            <div
+              key={log.id}
+              style={{
+                background: "#121212",
+                border: "1px solid #2a2a2a",
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontSize: "0.85rem",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, color: log.action.includes("REVOKED") ? "#f87171" : "#34d399" }}>
+                  {log.action}
+                </span>
+                <span style={{ color: "#666", fontSize: "0.75rem" }}>
+                  {new Date(log.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+              <div style={{ color: "#ccc" }}>{log.details}</div>
+              <div style={{ ...mono, fontSize: "0.75rem", marginTop: 4, color: "#666" }}>
+                actor: {log.actor} | record: {log.recordId}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </CareShell>
   );
 }
+

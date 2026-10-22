@@ -1,7 +1,9 @@
 "use client";
 
-import { useTideCloak } from "@tidecloak/nextjs";
+import { useTideCloak } from "@/lib/mock";
 import type { ReactNode } from "react";
+
+
 
 export const card: React.CSSProperties = {
   background: "#171717",

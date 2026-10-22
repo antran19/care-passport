@@ -1,6 +1,7 @@
 "use client";
 
-import { useTideCloak } from "@tidecloak/nextjs";
+import { useTideCloak } from "@/lib/mock";
+
 
 export default function HomePage() {
   const { authenticated, getValueFromIdToken, login, logout, isInitializing } =
