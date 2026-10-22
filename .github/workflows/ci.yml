@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - "feat/**"
   pull_request:
     branches:
       - main
@@ -31,7 +30,19 @@ jobs:
         run: |
           mkdir -p data
           if [ ! -f data/tidecloak.json ]; then
-            echo '{"realm":"care-passport"}' > data/tidecloak.json
+            cat << 'EOF' > data/tidecloak.json
+          {
+            "realm": "care-passport",
+            "auth-server-url": "http://localhost:8080",
+            "ssl-required": "external",
+            "resource": "care-passport-client",
+            "public-client": true,
+            "confidential-port": 0,
+            "jwk": {
+              "keys": []
+            }
+          }
+          EOF
           fi
 
       - name: TypeScript typecheck
