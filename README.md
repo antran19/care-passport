@@ -2,7 +2,7 @@
 
 ![Built with TideCloak](https://img.shields.io/badge/Built%20with-TideCloak-0f6e6e)
 
-**Team GoldenToads, FPT University.** UNLOCKED hackathon (RMIT x Tide), Challenge 2: vibe code a working app with TideCloak.
+**Team GoldenToads, FPT University.** Group name: `FPT_SGS_GoldenToads_C2`. UNLOCKED hackathon (RMIT x Tide), Challenge 2: vibe code a working app with TideCloak.
 
 A patient keeps control of their health records: records are encrypted in the browser, the patient shares them with a GP or a physio, and **a realm admin cannot read them**. All data in this repo is fake.
 
@@ -75,6 +75,12 @@ In short: TideCloak decides **who you are and which group you belong to**; the T
 | 2. Mock mode (simulated) | Encrypt, share, admin approves, GP reads, revoke, GP refused, admin blocked, with a fake Tide | [`care-passport-part2-mock-demo.gif`](care-passport-part2-mock-demo.gif) |
 
 Part 2 is **simulated** (`NEXT_PUBLIC_MOCK=1`). See [What is real and what is not](#what-is-real-and-what-is-not).
+
+Part 2 preview (simulated, fake data; the "Mock Role" bar at the bottom shows it is a mock):
+
+![Part 2: mock demo of share, approve, read, revoke and admin blocked](care-passport-part2-mock-demo.gif)
+
+If the Part 1 video does not play in the browser (it is a large file stored with Git LFS), use the "Download" button on its GitHub page, or `git lfs pull` after cloning.
 
 ## What each part is for, and how data flows
 
