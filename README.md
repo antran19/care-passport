@@ -1,6 +1,71 @@
 # Care Passport
 
-UNLOCKED hackathon (RMIT x Tide). A patient keeps control of their health records: records are encrypted in the browser, the patient shares them with a GP or a physio, and **a realm admin cannot read them**. All data in this repo is fake.
+![Built with TideCloak](https://img.shields.io/badge/Built%20with-TideCloak-0f6e6e)
+
+**Team GoldenToads, FPT University.** UNLOCKED hackathon (RMIT x Tide), Challenge 2: vibe code a working app with TideCloak.
+
+A patient keeps control of their health records: records are encrypted in the browser, the patient shares them with a GP or a physio, and **a realm admin cannot read them**. All data in this repo is fake.
+
+## 1. Vision and originality
+
+**Vision.** Health records should follow the patient, and the patient, not a database administrator, should decide who can read them. Care Passport is a "passport" the patient carries: a record is encrypted on the patient's device, and each person who needs it (a GP, a physio) is granted access to that one record, for a limited time, and can lose it again.
+
+**What is original.**
+- Access is **per record and per care team**, not "log in and see everything". The patient's records are tied to one group (`/p1-owner`); the people who help the patient sit in another (`/p1-care-team`) with read-only, expiring access.
+- **Granting is a signed act, not a database row.** Normally "Dr Lee may read assessment 42" is a row someone with database access can add. Here it is a policy that an admin approves inside the Tide enclave, and the encryption network checks it on every read.
+- The demo includes an **"Admin tries to read" button** that attacks our own system, so the claim "even the admin cannot read it" is shown, not just stated.
+
+## 2. Trust constraint insight
+
+**The constraint we designed around:** *do not trust the server, and do not trust any single admin.*
+
+In most health apps the server holds the keys, so anyone who controls the server (an operator, an attacker who breaks in, an admin who is curious) can read every record. We asked: what if the system must stay safe even when the server and the admin are the problem?
+
+| Who or what | What they can do | What they cannot do |
+|---|---|---|
+| **Our server** | Store ciphertext and signed policies, check who is calling | Decrypt anything. It never holds a key and no route decrypts |
+| **Realm admin** | Approve and sign grants in the enclave | Read patient data. The admin is not in the patient's group, so the network refuses (shown in the demo) |
+| **A stolen token** | Nothing alone. Tokens are bound to the browser's key (DPoP) | Be replayed from another machine |
+| **The patient's GP** | Read only what was shared, until it expires or is revoked | Write, or read other records |
+
+**Honest limit of this insight.** With one admin, that admin can sign a grant for themselves, so the protection against a *malicious admin* is only as strong as the number of admins (the Tide quorum needs several). We ran with one and say so below.
+
+## 3. Value and impact
+
+- **For patients:** one place to hold their own records, and a real choice about who sees them. Sharing with a new physio is a request, not a form handed over.
+- **For clinicians:** they see only what a patient shared with them, so there is less data to protect and less to get blamed for if something leaks.
+- **For the organisation running the system:** a breach of the server, or an unhappy administrator, does not expose readable records. The server holds only ciphertext, which lowers the cost and the blast radius of an incident.
+- **Auditability:** every grant, approval, revocation and admin inspection is written to a log shown on the admin page, so unilateral power is visible.
+- **Reach:** the same pattern (one record, one group, a signed grant) fits other sensitive data such as case files, assessments or legal documents.
+
+Health data is among the most sensitive data there is, which is why we chose it. Everything in this repo is fake data; this is a hackathon prototype, not a medical product.
+
+## 4. Why TideCloak matters
+
+TideCloak is not decoration here; the design does not work without it.
+
+- **No single key holder.** Encryption keys are split across the Tide ORK network (20 nodes, 14 needed). There is no master key on our server or on the admin's laptop to steal.
+- **A built-in rule engine for "who may read this record".** The contract `RelationshipAttestation:1` checks the caller's group, role, the record tag and the policy on every encrypt and decrypt. We wrote no cryptography and no custom contract.
+- **Governed admin changes (IGA).** Adding someone to a group or giving a role is a change request that an admin approves in the enclave, so access cannot be changed quietly.
+- **Passwordless sign-in.** The password is entered in the Tide enclave, never in our app or on our server.
+- **Sender-constrained tokens (DPoP).** A stolen token cannot be replayed from another browser; the server checks the proof on every API call.
+
+In short: TideCloak decides **who you are and which group you belong to**; the Tide network decides **whether the data opens**. Because the two are separate, even the realm admin cannot read patient data.
+
+## 5. Prototype and storytelling
+
+**The story.** *Nguyen Van A* has a knee injury and a penicillin allergy. A's records live in Care Passport, encrypted on A's own device. A needs a GP and a physio to see them.
+
+1. **A encrypts and shares.** A opens the Patient page, stores the allergy record, and presses *Share with GP*. A request is created.
+2. **The care steward approves.** The admin sees the request and signs a short-lived, read-only grant in the Tide enclave. The action is logged.
+3. **The GP reads.** *Dr Le Minh* opens the GP page and decrypts the record in the browser.
+4. **A revokes.** The grant is removed and the GP is refused on the next read.
+5. **The admin tries to read.** The care steward, who can approve grants, presses *Try to read patient records as admin*. The server shows only ciphertext and the Tide network refuses to decrypt.
+
+**What you can see today** (details and honest status in the sections below):
+- Part 1, on the real Tide realm: sign-in, the admin signing grants, and the admin being refused by the network.
+- Part 2, in simulated mock mode: the full story above, step by step.
+- **Not working on the real realm:** encrypt and decrypt through a group policy (see [What is real and what is not](#what-is-real-and-what-is-not)). We chose to show that plainly rather than hide it behind the mock.
 
 ## Demo
 
