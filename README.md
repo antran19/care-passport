@@ -164,8 +164,11 @@ So the **share, GP read and revoke flows are implemented but were not seen worki
 ### Mock mode (simulated)
 
 ```bash
-NEXT_PUBLIC_MOCK=1 npm run dev        # PowerShell: $env:NEXT_PUBLIC_MOCK="1"; npm run dev
+npm install
+npm run dev:mock     # no Docker, no realm, no .env needed; open http://localhost:3000/patient
 ```
+
+This is the way for anyone working on the UI. (`npm run dev:mock` sets `NEXT_PUBLIC_MOCK=1` and creates a stub `data/tidecloak.json` if it is missing.)
 
 A floating bar switches role (`patient1`, `gp1`, `physio1`, `admin1`). Crypto is fake, state lives in the browser and is lost on a full page reload (menu links reload the page; switch role on the page you are on, and use client navigation to keep state). Mock mode skips the real enclave signing. Never use it as evidence about Tide.
 
