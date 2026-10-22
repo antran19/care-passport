@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTideCloak } from "@tidecloak/nextjs";
+import { abs } from "@/lib/care/client";
 import { CareShell, card, btn, btnGhost, mono } from "./CareShell";
 import { decryptForRecord, encryptForRecord, isRefusal, describeRefusal, type TideCtx } from "@/lib/tide/relationship";
 
@@ -29,7 +30,7 @@ export function RecordsView({ title, subtitle, mode }: { title: string; subtitle
   const [note, setNote] = useState("");
 
   const load = useCallback(async () => {
-    const res = await secureFetch("/api/records");
+    const res = await secureFetch(abs("/api/records"));
     if (res.ok) setRecs((await res.json()).records);
     else setNote(`Could not load records (${res.status}).`);
   }, [secureFetch]);
@@ -39,7 +40,7 @@ export function RecordsView({ title, subtitle, mode }: { title: string; subtitle
   }, [authenticated, load]);
 
   const policyFor = async (recordId: string, op: "read" | "write") => {
-    const res = await secureFetch(`/api/policies?record=${recordId}&op=${op}`);
+    const res = await secureFetch(abs(`/api/policies?record=${recordId}&op=${op}`));
     if (!res.ok) throw new Error((await res.json()).error ?? "No policy for this record");
     return (await res.json()).policy as string;
   };
@@ -61,7 +62,7 @@ export function RecordsView({ title, subtitle, mode }: { title: string; subtitle
     run(r.id, async () => {
       const policy = await policyFor(r.id, "write");
       const ciphertext = await encryptForRecord(ctx, r.sample ?? "", r.id, policy);
-      const res = await secureFetch("/api/records", {
+      const res = await secureFetch(abs("/api/records"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: r.id, ciphertext }),
@@ -82,7 +83,7 @@ export function RecordsView({ title, subtitle, mode }: { title: string; subtitle
 
   const share = (r: Rec, to: "gp" | "physio" | "care-team") =>
     run(r.id, async () => {
-      const res = await secureFetch("/api/share-requests", {
+      const res = await secureFetch(abs("/api/share-requests"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recordId: r.id, to }),

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTideCloak } from "@tidecloak/nextjs";
+import { abs } from "@/lib/care/client";
 import tcConfig from "../../../data/tidecloak.json";
 import { CareShell, card, btn, btnGhost, btnDanger, mono } from "@/components/CareShell";
 import { fromBase64, signRelationshipPolicy, isRefusal, describeRefusal, type TideCtx, type RelationshipAccess } from "@/lib/tide/relationship";
@@ -38,7 +39,7 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const [a, b] = await Promise.all([secureFetch("/api/policies?all=1"), secureFetch("/api/share-requests")]);
+    const [a, b] = await Promise.all([secureFetch(abs("/api/policies?all=1")), secureFetch(abs("/api/share-requests"))]);
     if (a.ok) setPols((await a.json()).policies);
     if (b.ok) setReqs((await b.json()).requests);
   }, [secureFetch]);
@@ -67,7 +68,7 @@ export default function AdminPage() {
       },
       await adminPolicy(),
     );
-    const res = await secureFetch("/api/policies", {
+    const res = await secureFetch(abs("/api/policies"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ subjectType: "Group", subjectId, recordId, access, policy: signed }),
@@ -90,7 +91,7 @@ export default function AdminPage() {
   };
 
   const patch = (id: string, status: string) =>
-    secureFetch("/api/share-requests", {
+    secureFetch(abs("/api/share-requests"), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
@@ -105,7 +106,7 @@ export default function AdminPage() {
   const revoke = (r: ShareRequest) =>
     run("Revoke share", async () => {
       const p = pols.find((x) => x.recordId === r.recordId && x.subjectId === CARE_GROUP);
-      if (p) await secureFetch(`/api/policies?id=${p.id}`, { method: "DELETE" });
+      if (p) await secureFetch(abs(`/api/policies?id=${p.id}`), { method: "DELETE" });
       await patch(r.id, "revoked");
     });
 
