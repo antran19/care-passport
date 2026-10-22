@@ -1,8 +1,9 @@
 import { Providers } from "./providers";
+import "./globals.css";
 
 export const metadata = {
-  title: "Care Passport",
-  description: "Encrypted health passport: patient-controlled sharing, powered by Tide",
+  title: "Care Passport — Hồ sơ sức khỏe bảo mật",
+  description: "Hồ sơ sức khỏe được mã hóa. Bạn quyết định ai có quyền truy cập.",
 };
 
 export default function RootLayout({
@@ -11,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0, padding: "2rem", background: "#0a0a0a", color: "#ededed" }}>
+    <html lang="vi">
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -6,8 +6,8 @@ export default function GpPage() {
   return (
     <RecordsView
       mode="clinician"
-      title="GP: shared records"
-      subtitle="You can only open records the patient shared with your care team. Revoked access is refused by the network."
+      title="Không gian bác sĩ GP"
+      subtitle="Chỉ mở được hồ sơ bệnh nhân đã chia sẻ với nhóm chăm sóc. Quyền đã thu hồi sẽ bị mạng từ chối."
     />
   );
 }

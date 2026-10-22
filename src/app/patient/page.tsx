@@ -6,8 +6,8 @@ export default function PatientPage() {
   return (
     <RecordsView
       mode="patient"
-      title="My health passport"
-      subtitle="Your records are encrypted in your browser. Share them with your GP or physio; an admin approves."
+      title="Không gian bệnh nhân"
+      subtitle="Bạn sở hữu hồ sơ sức khỏe. Chia sẻ khi cần thiết và theo dõi yêu cầu ngay tại đây."
     />
   );
 }

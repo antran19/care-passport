@@ -330,38 +330,16 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
       {/* Floating Mock Role Switcher for seamless demo testing */}
       <aside
         aria-label="Mock Mode Role Switcher"
-        style={{
-          position: "fixed",
-          bottom: 12,
-          right: 12,
-          zIndex: 99999,
-          background: "#121212",
-          border: "1px solid #0f6e6e",
-          borderRadius: 8,
-          padding: "8px 12px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
-          fontSize: "0.85rem",
-        }}
+        className="mock-role-switcher"
       >
-        <span style={{ color: "#5eead4", fontWeight: 600 }}>🛠️ Mock Role:</span>
+        <span className="mock-role-label"><span>DEMO</span> Vai trò</span>
         {(Object.keys(MOCK_USERS) as (keyof typeof MOCK_USERS)[]).map((k) => (
           <button
             key={k}
             onClick={() => switchUser(k)}
-            style={{
-              background: currentUserKey === k ? "#0f6e6e" : "#222",
-              color: currentUserKey === k ? "#fff" : "#9ca3af",
-              border: currentUserKey === k ? "1px solid #5eead4" : "1px solid #333",
-              borderRadius: 4,
-              padding: "4px 8px",
-              cursor: "pointer",
-              fontWeight: currentUserKey === k ? "bold" : "normal",
-            }}
+            className={`mock-role-button ${currentUserKey === k ? "active" : ""}`}
           >
-            {k}
+            {k === "patient1" ? "Bệnh nhân" : k === "gp1" ? "Bác sĩ GP" : k === "physio1" ? "Physio" : "Admin"}
           </button>
         ))}
       </aside>

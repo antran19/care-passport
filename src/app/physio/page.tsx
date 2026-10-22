@@ -6,8 +6,8 @@ export default function PhysioPage() {
   return (
     <RecordsView
       mode="clinician"
-      title="Physio: shared records"
-      subtitle="You can only open records the patient shared with your care team. Revoked access is refused by the network."
+      title="Không gian vật lý trị liệu"
+      subtitle="Chỉ mở được hồ sơ bệnh nhân đã chia sẻ với nhóm chăm sóc. Quyền đã thu hồi sẽ bị mạng từ chối."
     />
   );
 }
