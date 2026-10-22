@@ -83,6 +83,22 @@ export const records = {
   },
 };
 
+// Self-encrypted notes (tag "vault", no policy): bound to the user who wrote them. Used by the
+// "admin tries to read" demo with real network refusals.
+export interface VaultEntry {
+  owner: string;
+  ciphertext: string;
+  updatedAt: string;
+}
+export const vault = {
+  all: () => load<VaultEntry[]>("vault", []),
+  put(owner: string, ciphertext: string) {
+    const list = vault.all().filter((v) => v.owner !== owner);
+    list.push({ owner, ciphertext, updatedAt: new Date().toISOString() });
+    save("vault", list);
+  },
+};
+
 export const policies = {
   all: () => load<StoredPolicy[]>("policies", []),
   add(p: Omit<StoredPolicy, "id" | "createdAt">): StoredPolicy {

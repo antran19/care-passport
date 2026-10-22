@@ -29,7 +29,8 @@ export default function AdminAttackPage() {
     const out: Attempt[] = [];
     try {
       const raw = await secureFetch(abs("/api/admin/raw"));
-      const server: { id: string; ciphertext: string | null }[] = raw.ok ? (await raw.json()).records : [];
+      const body = raw.ok ? await raw.json() : { records: [], vault: [] };
+      const server: { id: string; ciphertext: string | null }[] = body.records ?? [];
       for (const r of RECORDS) {
         const ct = server.find((s) => s.id === r.id)?.ciphertext ?? null;
         const pol = await secureFetch(abs(`/api/policies?record=${r.id}&op=read`));
@@ -52,6 +53,27 @@ export default function AdminAttackPage() {
           policyLookup: pol.ok ? "a policy applies to this admin (unexpected)" : `none (HTTP ${pol.status}): no policy names the admin`,
           networkDecrypt: net,
           blocked: blocked && !pol.ok,
+        });
+      }
+      // Self-encrypted notes written by patients: bound to the writer's own key, no policy involved.
+      const vaultEntries: { owner: string; ciphertext: string }[] = body.vault ?? [];
+      for (const v of vaultEntries) {
+        let net: string;
+        let blocked = true;
+        try {
+          await doDecrypt([{ encrypted: v.ciphertext, tags: ["vault"] }]);
+          net = "DECRYPTED (this should not happen)";
+          blocked = false;
+        } catch (e) {
+          net = `refused: ${isRefusal(e) ? describeRefusal(e) : e instanceof Error ? e.message.slice(0, 160) : String(e)}`;
+        }
+        out.push({
+          recordId: `vault-${v.owner}`,
+          title: `Private note written by ${v.owner} (fake text, encrypted with their own key)`,
+          serverSees: `ciphertext only: ${v.ciphertext.slice(0, 48)}...`,
+          policyLookup: "n/a (key is bound to the writer, no policy exists)",
+          networkDecrypt: net,
+          blocked,
         });
       }
     } finally {
