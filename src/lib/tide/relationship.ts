@@ -90,6 +90,10 @@ export function buildRelationshipPolicy(grant: RelationshipGrant) {
  * GET {auth-server-url}/admin/realms/{realm}/iga/role-policies/name/tide-realm-admin (field `policy`).
  */
 export async function signRelationshipPolicy(ctx: TideCtx, grant: RelationshipGrant, adminPolicy: Uint8Array): Promise<string> {
+  // Mock mode has no enclave: the fake provider cannot produce a real signature, so return a stand-in.
+  if (process.env.NEXT_PUBLIC_MOCK === "1") {
+    return toBase64(new TextEncoder().encode(`mock-signed-policy:${grant.subject.id}:${grant.recordId}:${grant.access}`));
+  }
   const policy = buildRelationshipPolicy(grant);
 
   // The contract is built into the ORK, so the request carries the policy and nothing else.
