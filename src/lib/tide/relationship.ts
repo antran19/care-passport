@@ -137,5 +137,6 @@ export function isRefusal(e: unknown): boolean {
 export function describeRefusal(e: unknown): string {
   const raw = e instanceof Error ? `${e.message} ${String((e as { cause?: unknown }).cause ?? "")}` : String(e);
   const m = raw.match(/(Tags do not contain[^.]*\.|[^'"\n]*not found in (?:doken|list of roles)[^.\n]*\.?|subjectId does not match[^\n]*)/i);
-  return m ? m[0].trim() : raw.slice(0, 240);
+  if (!m) console.error("[tide refusal]", e);
+  return m ? m[0].trim() : raw.slice(0, 2500);
 }
