@@ -1,3 +1,4 @@
 * text=auto
 *.sh text eol=lf
 *.template text eol=lf
+*.mp4 filter=lfs diff=lfs merge=lfs -text
