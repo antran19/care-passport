@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTideCloak } from "@tidecloak/nextjs";
+import { useTideCloak } from "@/lib/mock";
 import { CareShell, card, btn, mono } from "@/components/CareShell";
+
 import { isRefusal, describeRefusal } from "@/lib/tide/relationship";
 import { RECORDS } from "@/lib/care/data";
 

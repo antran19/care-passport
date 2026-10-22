@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "tide-pack": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@tideorg/mcp"
+      ]
+    }
+  }
+}

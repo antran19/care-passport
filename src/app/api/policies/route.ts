@@ -1,7 +1,7 @@
 import { withAuth } from "@/lib/auth/middleware";
 import { hasRole } from "@/lib/auth/tideJWT";
 import { policies, policiesFor, ADMIN_ROLE, who } from "@/lib/care/store";
-import { recordById, OWNER_GROUP, CARE_GROUP } from "@/lib/care/data";
+import { recordById, OWNER_GROUP, CARE_GROUP, P2_OWNER_GROUP } from "@/lib/care/data";
 
 // GET /api/policies?record=<id>&op=read|write  -> the caller's applicable signed policy (or 404)
 // GET /api/policies?all=1                       -> admin only: every stored policy (metadata)
@@ -24,8 +24,14 @@ export const GET = withAuth(async (req, jwt) => {
 // and that the request names a subject and record this app knows about.
 export const POST = withAuth(async (req, jwt) => {
   if (!hasRole(jwt, ADMIN_ROLE)) return Response.json({ error: "Forbidden" }, { status: 403 });
-  const b = await req.json();
-  const okSubject = b.subjectType === "Group" && [OWNER_GROUP, CARE_GROUP].includes(b.subjectId);
+  let b: any;
+  try {
+    b = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const allowedGroups = [OWNER_GROUP, CARE_GROUP, P2_OWNER_GROUP];
+  const okSubject = b.subjectType === "Group" && allowedGroups.includes(b.subjectId);
   if (!okSubject) return Response.json({ error: "Unsupported subject" }, { status: 400 });
   if (!recordById(b.recordId)) return Response.json({ error: "Unknown record" }, { status: 400 });
   if (!["read", "write", "read-write"].includes(b.access)) return Response.json({ error: "Bad access" }, { status: 400 });
@@ -46,5 +52,7 @@ export const POST = withAuth(async (req, jwt) => {
 export const DELETE = withAuth(async (req, jwt) => {
   if (!hasRole(jwt, ADMIN_ROLE)) return Response.json({ error: "Forbidden" }, { status: 403 });
   const id = new URL(req.url).searchParams.get("id") ?? "";
-  return policies.remove(id) ? Response.json({ success: true }) : Response.json({ error: "Not found" }, { status: 404 });
+  if (!id) return Response.json({ error: "Missing id" }, { status: 400 });
+  return policies.remove(id, who(jwt)) ? Response.json({ success: true }) : Response.json({ error: "Not found" }, { status: 404 });
 });
+

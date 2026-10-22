@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTideCloak } from "@tidecloak/nextjs";
+import { useTideCloak } from "@/lib/mock";
+
 import { CareShell, card, btn, btnGhost, mono } from "./CareShell";
 import { decryptForRecord, encryptForRecord, isRefusal, describeRefusal, type TideCtx } from "@/lib/tide/relationship";
 
