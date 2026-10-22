@@ -22,3 +22,7 @@ data;C/
 *.tsbuildinfo
 next-env.d.ts
 branding/PROMPT.md
+
+# Agents
+.agents/
+
